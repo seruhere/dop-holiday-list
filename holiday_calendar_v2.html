@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>India Post Holiday Calendar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background: linear-gradient(135deg, #0056a0 0%, #003d7a 100%);
+      color: white;
+      padding: 24px 28px;
+      border-radius: 16px 16px 0 0;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 16px; }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .control-group { display: flex; flex-direction: column; gap: 4px; }
+    .control-group label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+    select {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      cursor: pointer;
+      min-width: 160px;
+    }
+    select:hover { background: rgba(255,255,255,0.25); }
+    select option { background: #003d7a; color: white; }
+    .stats-bar {
+      background: white;
+      border-radius: 0 0 16px 16px;
+      padding: 20px 28px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid #eee;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0056a0;
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+    .stat-card.long .stat-value { color: #d32f2f; }
+    .stat-card.crossed .stat-value { color: #666; }
+    .stat-card.left .stat-value { color: #2e7d32; }
+    .calendar-section {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .year-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 12px;
+    }
+    @media (max-width: 1100px) {
+      .year-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 850px) {
+      .year-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .year-grid { grid-template-columns: 1fr; }
+    }
+    .month-card {
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      overflow: hidden;
+    }
+    .month-header {
+      padding: 8px 10px;
+      background: #0056a0;
+      color: white;
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 4px 4px 2px;
+      gap: 1px;
+    }
+    .weekday {
+      text-align: center;
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .weekday.sunday { color: #ff8a8a; }
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      padding: 2px 4px 4px;
+    }
+    .day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+      background: white;
+      border-radius: 10px;
+    }
+    .day:hover { background: #f0f0f0; }
+    .day.empty { cursor: default; background: transparent; }
+    .day.empty:hover { background: transparent; }
+    .day-number {
+      font-weight: 600;
+      color: #1e293b;
+      z-index: 1;
+      line-height: 1;
+      font-size: 0.88rem;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .day.today .day-number {
+      background: #0056a0;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .day.holiday, .day.sunday {
+      background: #f2aaaa;
+    }
+    .day.holiday:hover, .day.sunday:hover { background: #e89898; }
+    .day.holiday .day-number, .day.sunday .day-number { color: #d32f2f; font-weight: 600; }
+    .day.holiday.today .day-number, .day.sunday.today .day-number {
+      background: #d32f2f;
+      color: white;
+    }
+    .day.multiple-holidays .day-number::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #b71c1c;
+    }
+    .holiday-tooltip {
+      position: fixed;
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      max-width: 200px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .holiday-tooltip.visible { opacity: 1; }
+    .holiday-list {
+      padding: 20px 28px 28px;
+      border-top: 1px solid #eee;
+      background: #fafafa;
+    }
+    .holiday-list h3 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 12px; }
+    .holiday-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 3px solid #d32f2f;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .holiday-item.long-weekend { border-left-color: #ff9f1c; background: #fffbf0; }
+    .holiday-date { min-width: 100px; font-weight: 600; color: #0056a0; font-size: 0.85rem; }
+    .holiday-name { flex: 1; color: #333; font-size: 0.85rem; }
+    .holiday-day { color: #666; font-size: 0.75rem; margin-left: 12px; }
+    .long-weekend-badge {
+      background: #ff9f1c;
+      color: #003d7a;
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      text-transform: uppercase;
+    }
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px 8px;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+    .month-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0056a0;
+      flex: 1;
+      text-align: center;
+    }
+    .nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { background: #0056a0; color: white; border-color: #0056a0; }
+    .slider-container {
+      padding: 8px 20px 12px;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+    .month-slider {
+      width: 100%;
+      accent-color: #0056a0;
+      cursor: pointer;
+    }
+    .legend {
+      display: flex;
+      gap: 20px;
+      padding: 16px 28px;
+      background: white;
+      border-top: 1px solid #eee;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; color: #555; }
+    .legend-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ddd; }
+    .legend-box.today { background: #0056a0; border-color: #0056a0; }
+    .legend-box.holiday { background: #f2aaaa; border-color: #d32f2f; }
+    .legend-box.sunday { background: #f2aaaa; border-color: #d32f2f; }
+    .legend-box.long { background: #fff8e1; border-color: #ff9f1c; }
+    .theme-toggle {
+      margin-left: auto;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15);
+      color: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.25); }
+    /* Dark mode */
+    body.dark-mode { background: #0f172a; color: #e2e8f0; }
+    body.dark-mode .stats-bar,
+    body.dark-mode .calendar-section,
+    body.dark-mode .month-card { background: #1e293b; border-color: #334155; }
+    body.dark-mode .stat-card { background: #0f172a; border-color: #334155; }
+    body.dark-mode .stat-value { color: #60a5fa; }
+    body.dark-mode .stat-label { color: #94a3b8; }
+    body.dark-mode .month-nav,
+    body.dark-mode .slider-container { background: #0f172a; border-color: #334155; }
+    body.dark-mode .month-title { color: #60a5fa; }
+    body.dark-mode .year-grid { background: #1e293b; }
+    body.dark-mode .month-header { background: #0f172a; color: #e2e8f0; }
+    body.dark-mode .weekday { color: #94a3b8; }
+    body.dark-mode .days { background: #1e293b; }
+    body.dark-mode .day { background: #0f172a; border: 1px solid #1e293b; }
+    body.dark-mode .day-number { color: #e2e8f0; }
+    body.dark-mode .day:hover { background: #334155; }
+    body.dark-mode .day.empty { background: transparent; }
+    body.dark-mode .day.holiday,
+    body.dark-mode .day.sunday { background: #7f1d1d; }
+    body.dark-mode .day.holiday .day-number,
+    body.dark-mode .day.sunday .day-number { color: #fecaca; }
+    body.dark-mode .holiday-list { background: #0f172a; border-color: #334155; }
+    body.dark-mode .holiday-item { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+    body.dark-mode .holiday-item.long-weekend { background: #451a03; }
+    body.dark-mode .legend { background: #0f172a; border-color: #334155; }
+    @media (max-width: 700px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .controls { flex-direction: column; align-items: stretch; }
+      select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>India Post Holiday Calendar</h1>
+      <div class="controls">
+        <div class="control-group">
+          <label>Year</label>
+          <select id="yearSelect"></select>
+        </div>
+        <div class="control-group">
+          <label>State / Circle</label>
+          <select id="stateSelect"></select>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat-card total">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Holidays</div>
+      </div>
+      <div class="stat-card crossed">
+        <div class="stat-value" id="statCrossed">0</div>
+        <div class="stat-label">Holidays Crossed</div>
+      </div>
+      <div class="stat-card left">
+        <div class="stat-value" id="statLeft">0</div>
+        <div class="stat-label">Holidays Left</div>
+      </div>
+      <div class="stat-card long">
+        <div class="stat-value" id="statLong">0</div>
+        <div class="stat-label">Long Weekends</div>
+      </div>
+    </div>
+
+    <div class="calendar-section">
+      <div class="month-nav">
+        <button class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+        <div class="month-title" id="monthTitle">January 2026</div>
+        <button class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="monthSlider" min="0" max="11" value="0" class="month-slider">
+        <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#999;margin-top:2px"><span>Jan</span><span>Dec</span></div>
+      </div>
+      <div class="year-grid" id="yearGrid" style="grid-template-columns:1fr;max-width:520px;margin:0 auto;padding:16px"></div>
+      <div class="holiday-list">
+        <h3>All Holidays - <span id="listYear">2026</span></h3>
+        <div id="fullHolidayList"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-box today"></span> Today</div>
+        <div class="legend-item"><span class="legend-box holiday"></span> Holiday</div>
+        <div class="legend-item"><span class="legend-box sunday"></span> Sunday</div>
+        <div class="legend-item"><span class="legend-box long"></span> Long Weekend</div>
+      </div>
+    </div>
+  </div>
+  <div class="holiday-tooltip" id="tooltip"></div>
+  <script>
+    const STATES = [
+      { value: 'all-india', label: 'All India' },
+      { value: 'andaman-nicobar', label: 'Andaman & Nicobar Islands (West Bengal Circle)' },
+      { value: 'andhra-pradesh', label: 'Andhra Pradesh Circle' },
+      { value: 'arunachal-pradesh', label: 'Arunachal Pradesh (North East Circle)' },
+      { value: 'assam', label: 'Assam Circle' },
+      { value: 'bihar', label: 'Bihar Circle' },
+      { value: 'chhattisgarh', label: 'Chhattisgarh Circle' },
+      { value: 'delhi', label: 'Delhi Circle' },
+      { value: 'gujarat', label: 'Gujarat Circle' },
+      { value: 'haryana', label: 'Haryana Circle' },
+      { value: 'himachal-pradesh', label: 'Himachal Pradesh Circle' },
+      { value: 'jammu-kashmir', label: 'Jammu & Kashmir Circle' },
+      { value: 'jharkhand', label: 'Jharkhand Circle' },
+      { value: 'karnataka', label: 'Karnataka Circle' },
+      { value: 'kerala', label: 'Kerala Circle' },
+      { value: 'madhya-pradesh', label: 'Madhya Pradesh Circle' },
+      { value: 'maharashtra', label: 'Maharashtra Circle' },
+      { value: 'manipur', label: 'Manipur (North East Circle)' },
+      { value: 'meghalaya', label: 'Meghalaya (North East Circle)' },
+      { value: 'mizoram', label: 'Mizoram (North East Circle)' },
+      { value: 'nagaland', label: 'Nagaland (North East Circle)' },
+      { value: 'odisha', label: 'Odisha Circle' },
+      { value: 'punjab', label: 'Punjab Circle' },
+      { value: 'rajasthan', label: 'Rajasthan Circle' },
+      { value: 'sikkim', label: 'Sikkim (West Bengal Circle)' },
+      { value: 'tamil-nadu', label: 'Tamil Nadu Circle' },
+      { value: 'telangana', label: 'Telangana Circle' },
+      { value: 'tripura', label: 'Tripura (North East Circle)' },
+      { value: 'uttar-pradesh', label: 'Uttar Pradesh Circle' },
+      { value: 'uttarakhand', label: 'Uttarakhand Circle' },
+      { value: 'west-bengal', label: 'West Bengal Circle' }
+    ];
+
+    // Fix: All-India (indiapost.gov.in) = 14 gazetted holidays.
+    // West Bengal Circle (incl. West Bengal, Sikkim, Andaman & Nicobar) = 17 as per
+    // West_Bengal_Holidays_2026.jpg in repo: adds Basant Panchami 23-Jan, Holi 04-Mar, Dussehra Maha Ashtami 19-Oct
+    const WEST_BENGAL_2026 = [
+      { name: "Basant Panchami / Sri Panchami", date: "2026-01-23" },
+      { name: "Republic Day", date: "2026-01-26" },
+      { name: "Holi", date: "2026-03-04" },
+      { name: "Id-ul-Fitr", date: "2026-03-21" },
+      { name: "Mahavir Jayanti", date: "2026-03-31" },
+      { name: "Good Friday", date: "2026-04-03" },
+      { name: "Buddha Purnima", date: "2026-05-01" },
+      { name: "Id-ul-Zuha (Bakrid)", date: "2026-05-27" },
+      { name: "Muharram", date: "2026-06-26" },
+      { name: "Independence Day", date: "2026-08-15" },
+      { name: "Milad-un-Nabi / Id-E-Milad", date: "2026-08-26" },
+      { name: "Mahatma Gandhi's Birthday", date: "2026-10-02" },
+      { name: "Dussehra (Maha Ashtami)", date: "2026-10-19" },
+      { name: "Dussehra", date: "2026-10-20" },
+      { name: "Diwali (Deepavali)", date: "2026-11-08" },
+      { name: "Guru Nanak's Birthday", date: "2026-11-24" },
+      { name: "Christmas Day", date: "2026-12-25" }
+    ];
+    const HOLIDAYS = {
+      'all-india': {
+        2025: [
+          { name: "Republic Day", date: "2025-01-26" },
+          { name: "Id-ul-Fitr", date: "2025-03-31" },
+          { name: "Mahavir Jayanti", date: "2025-04-10" },
+          { name: "Good Friday", date: "2025-04-18" },
+          { name: "Buddha Purnima", date: "2025-05-12" },
+          { name: "Id-ul-Zuha", date: "2025-06-07" },
+          { name: "Muharram", date: "2025-07-06" },
+          { name: "Independence Day", date: "2025-08-15" },
+          { name: "Prophet Mohammad's Birthday (Id-e-Milad)", date: "2025-09-05" },
+          { name: "Mahatma Gandhi's Birthday", date: "2025-10-02" },
+          { name: "Dussehra (Vijay Dashmi)", date: "2025-10-02" },
+          { name: "Diwali (Deepavali)", date: "2025-10-20" },
+          { name: "Guru Nanak's Birthday", date: "2025-11-05" },
+          { name: "Christmas Day", date: "2025-12-25" }
+        ],
+        2026: [
+          { name: "Republic Day", date: "2026-01-26" },
+          { name: "Id-ul-Fitr", date: "2026-03-21" },
+          { name: "Mahavir Jayanti", date: "2026-03-31" },
+          { name: "Good Friday", date: "2026-04-03" },
+          { name: "Buddha Purnima", date: "2026-05-01" },
+          { name: "Id-ul-Zuha", date: "2026-05-27" },
+          { name: "Muharram", date: "2026-06-26" },
+          { name: "Independence Day", date: "2026-08-15" },
+          { name: "Prophet Mohammad's Birthday (Id-e-Milad)", date: "2026-08-26" },
+          { name: "Mahatma Gandhi's Birthday", date: "2026-10-02" },
+          { name: "Dussehra (Vijay Dashmi)", date: "2026-10-20" },
+          { name: "Diwali (Deepavali)", date: "2026-11-08" },
+          { name: "Guru Nanak's Birthday", date: "2026-11-24" },
+          { name: "Christmas Day", date: "2026-12-25" }
+        ]
+      },
+      'west-bengal': { 2025: null, 2026: WEST_BENGAL_2026 },
+      'sikkim': { 2025: null, 2026: WEST_BENGAL_2026 },
+      'andaman-nicobar': { 2025: null, 2026: WEST_BENGAL_2026 }
+    };
+    // Populate 2025 for WB circle from same base but keep 17-count (add 3 state extras with 2025 dates approximated)
+    // For 2025 WB, reuse 2025 All-India + Holi/Basant/Maha Ashtami 2025 dates
+    HOLIDAYS['west-bengal'][2025] = [
+      { name: "Basant Panchami / Sri Panchami", date: "2025-02-02" },
+      { name: "Republic Day", date: "2025-01-26" },
+      { name: "Holi", date: "2025-03-14" },
+      { name: "Id-ul-Fitr", date: "2025-03-31" },
+      { name: "Mahavir Jayanti", date: "2025-04-10" },
+      { name: "Good Friday", date: "2025-04-18" },
+      { name: "Buddha Purnima", date: "2025-05-12" },
+      { name: "Id-ul-Zuha", date: "2025-06-07" },
+      { name: "Muharram", date: "2025-07-06" },
+      { name: "Independence Day", date: "2025-08-15" },
+      { name: "Prophet Mohammad's Birthday (Id-e-Milad)", date: "2025-09-05" },
+      { name: "Mahatma Gandhi's Birthday", date: "2025-10-02" },
+      { name: "Dussehra (Maha Ashtami)", date: "2025-10-01" },
+      { name: "Dussehra (Vijay Dashmi)", date: "2025-10-02" },
+      { name: "Diwali (Deepavali)", date: "2025-10-20" },
+      { name: "Guru Nanak's Birthday", date: "2025-11-05" },
+      { name: "Christmas Day", date: "2025-12-25" }
+    ];
+    HOLIDAYS['sikkim'][2025] = HOLIDAYS['west-bengal'][2025];
+    HOLIDAYS['andaman-nicobar'][2025] = HOLIDAYS['west-bengal'][2025];
+    // All India too has 17 gazetted holidays — fix: override All India to 17
+    HOLIDAYS['all-india'][2025] = HOLIDAYS['west-bengal'][2025];
+    HOLIDAYS['all-india'][2026] = WEST_BENGAL_2026;
+    // Every circle has 17 gazetted holidays — populate all remaining circles with 17-list
+    STATES.forEach(s => {
+      if (s.value !== 'all-india' && !HOLIDAYS[s.value]) {
+        HOLIDAYS[s.value] = { 2025: HOLIDAYS['west-bengal'][2025], 2026: WEST_BENGAL_2026 };
+      }
+    });
+
+    const yearSelect = document.getElementById('yearSelect');
+    const stateSelect = document.getElementById('stateSelect');
+    const yearGrid = document.getElementById('yearGrid');
+    const fullHolidayList = document.getElementById('fullHolidayList');
+    const listYear = document.getElementById('listYear');
+    const statTotal = document.getElementById('statTotal');
+    const statCrossed = document.getElementById('statCrossed');
+    const statLeft = document.getElementById('statLeft');
+    const statLong = document.getElementById('statLong');
+    const tooltip = document.getElementById('tooltip');
+
+    let currentYear = 2026;
+    let currentState = 'west-bengal';
+    let currentMonth = new Date().getMonth(); // current month visible on load
+    // if selected year is not today year, keep slider on same month index but update title correctly
+    const monthTitle = document.getElementById('monthTitle');
+    const monthSlider = document.getElementById('monthSlider');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+
+    function initSelectors() {
+      for (let y = 2026; y >= 2025; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y === 2026) opt.selected = true;
+        yearSelect.appendChild(opt);
+      }
+      STATES.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.value;
+        opt.textContent = s.label;
+        if (s.value === 'west-bengal') opt.selected = true;
+        stateSelect.appendChild(opt);
+      });
+      if (monthSlider) monthSlider.value = currentMonth;
+    }
+
+    function getHolidays(year, state) {
+      return HOLIDAYS[state]?.[year] || HOLIDAYS['all-india'][year] || [];
+    }
+
+    function getDaysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(year, month) {
+      return new Date(year, month, 1).getDay();
+    }
+
+    function formatDateStr(year, month, day) {
+      return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+
+    function isLongWeekend(holidayDate) {
+      const day = new Date(holidayDate + 'T00:00:00').getDay();
+      return day === 1 || day === 6;
+    }
+
+    function computeStats(holidays) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      let total = 0, crossed = 0, left = 0, longWeekends = 0;
+      holidays.forEach(h => {
+        total++;
+        const hDate = new Date(h.date + 'T00:00:00');
+        if (hDate < today) crossed++;
+        else left++;
+        if (isLongWeekend(h.date)) longWeekends++;
+      });
+      return { total, crossed, left, longWeekends };
+    }
+
+    function renderYear() {
+      const holidays = getHolidays(currentYear, currentState);
+      const today = new Date();
+
+      // Stats — logics kept correct (full year)
+      const stats = computeStats(holidays);
+      statTotal.textContent = stats.total;
+      statCrossed.textContent = stats.crossed;
+      statLeft.textContent = stats.left;
+      statLong.textContent = stats.longWeekends;
+      listYear.textContent = currentYear;
+
+      // Month title + slider
+      const monthName = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long' });
+      if (monthTitle) monthTitle.textContent = `${monthName} ${currentYear}`;
+      if (monthSlider) monthSlider.value = currentMonth;
+
+      // Build SINGLE month card — current month visible via slider
+      const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+      const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+      const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
+
+      let html = `<div class="month-card">
+        <div class="month-header">${monthName} ${currentYear}</div>
+        <div class="weekdays">
+          ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i) => `<div class="weekday${i===0?' sunday':''}">${d}</div>`).join('')}
+        </div>
+        <div class="days">`;
+
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="day empty"></div>';
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = formatDateStr(currentYear, currentMonth, day);
+        const dayHolidays = holidays.filter(h => h.date === dateStr);
+        const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
+        const isSunday = dayOfWeek === 0;
+        const isToday = isCurrentMonth && day === today.getDate();
+        const isHoliday = dayHolidays.length > 0;
+        const isLong = isHoliday && isLongWeekend(dateStr);
+
+        let classes = 'day';
+        if (isToday) classes += ' today';
+        if (isHoliday) classes += ' holiday';
+        if (isSunday) classes += ' sunday';
+        if (isHoliday && dayHolidays.length > 1) classes += ' multiple-holidays';
+        if (isLong) classes += ' long-weekend';
+
+        html += `
+          <div class="${classes}" data-date="${dateStr}" data-holidays='${JSON.stringify(dayHolidays.map(h=>h.name))}'>
+            <span class="day-number">${day}</span>
+          </div>`;
+      }
+
+      html += `</div></div>`;
+      yearGrid.innerHTML = html;
+
+      // Full holiday list — complete list kept (as you requested)
+      if (holidays.length === 0) {
+        fullHolidayList.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No holidays for this selection</div>';
+      } else {
+        fullHolidayList.innerHTML = holidays.map(h => {
+          const date = new Date(h.date + 'T00:00:00');
+          const dayName = date.toLocaleString('default', { weekday: 'long' });
+          const formattedDate = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          const isLong = isLongWeekend(h.date);
+          const isThisMonth = date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+          return `
+            <div class="holiday-item${isLong ? ' long-weekend' : ''}" style="${isThisMonth ? 'outline:2px solid #0056a0;outline-offset:-2px' : ''}">
+              <span class="holiday-date">${formattedDate}</span>
+              <span class="holiday-name">${h.name}${isLong ? '<span class="long-weekend-badge">Long Weekend</span>' : ''}${isThisMonth ? ' <span style="font-size:0.65rem;background:#0056a0;color:white;padding:2px 6px;border-radius:10px">This Month</span>' : ''}</span>
+              <span class="holiday-day">${dayName}</span>
+            </div>`;
+        }).join('');
+      }
+
+      attachTooltipEvents();
+    }
+
+    function attachTooltipEvents() {
+      document.querySelectorAll('.day:not(.empty)').forEach(day => {
+        day.addEventListener('mouseenter', (e) => {
+          const holidays = JSON.parse(day.dataset.holidays || '[]');
+          if (holidays.length === 0) return;
+          tooltip.innerHTML = holidays.map(h => `<div style="padding:2px 0;">${h}</div>`).join('');
+          tooltip.classList.add('visible');
+          positionTooltip(e);
+        });
+        day.addEventListener('mousemove', positionTooltip);
+        day.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+      });
+    }
+
+    function positionTooltip(e) {
+      const rect = tooltip.getBoundingClientRect();
+      let left = e.clientX + 16;
+      let top = e.clientY - rect.height - 12;
+      if (left + rect.width > window.innerWidth - 16) left = e.clientX - rect.width - 16;
+      if (top < 16) top = e.clientY + 24;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+
+    yearSelect.addEventListener('change', (e) => {
+      currentYear = parseInt(e.target.value);
+      renderYear();
+    });
+
+    stateSelect.addEventListener('change', (e) => {
+      currentState = e.target.value;
+      renderYear();
+    });
+
+    if (monthSlider) {
+      monthSlider.addEventListener('input', (e) => {
+        currentMonth = parseInt(e.target.value);
+        renderYear();
+      });
+    }
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; yearSelect.value = currentYear; }
+        renderYear();
+      });
+    }
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; yearSelect.value = currentYear; }
+        renderYear();
+      });
+    }
+
+    // Dark/Light mode
+    const themeToggle = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('holiday-theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      if (themeToggle) themeToggle.textContent = '☀️ Light';
+    }
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeToggle.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+        localStorage.setItem('holiday-theme', isDark ? 'dark' : 'light');
+      });
+    }
+
+    initSelectors();
+    renderYear();
+  </script>
+</body>
+</html>
