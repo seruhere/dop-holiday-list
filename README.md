@@ -2,11 +2,7 @@
 
 Interactive calendar for **India Post gazetted holidays** — built from [indiapost.gov.in/holidays-list](https://www.indiapost.gov.in/holidays-list) and the official West Bengal Circle 2026 calendar (`West_Bengal_Holidays_2026.jpg`).
 
-Open `holiday_calendar.html` in any modern browser — no build step, no server required.
-
-## Demo
-- **Primary file:** `holiday_calendar.html` (single-file, offline)
-- **Backup:** `holiday_calendar_v2.html` (identical)
+Websit: https://dopholidays.netlify.app/
 
 Just double-click to open.
 
